@@ -109,3 +109,5 @@ static_collected
 # Exclude machine-specific vs code settings
 .vscode/
 
+# Exclude media folder
+media/
