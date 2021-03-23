@@ -7,14 +7,12 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from authentication.models import User
-from authentication.renderers import UserJSONRenderer
 
 from .serializers import UserWithProfileSerializer
 
 
 class ProfileAPIView(RetrieveUpdateAPIView):
     permission_classes = (IsAuthenticatedOrReadOnly,)
-    renderer_classes = (UserJSONRenderer,)
     serializer_class = UserWithProfileSerializer
 
     def retrieve(self, request, username=None, *args, **kwargs):

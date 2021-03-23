@@ -24,4 +24,5 @@ urlpatterns = [
 
     url('api/', include('authentication.urls', namespace='authentication')),
     url('api/', include('profiles.urls', namespace='profiles')),
+    url('api/', include('forums.urls', namespace='forums')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
