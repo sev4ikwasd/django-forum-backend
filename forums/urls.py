@@ -1,9 +1,14 @@
-from django.conf.urls import url
+from django.urls import path, include
 
-from .views import ForumAPIView
+from rest_framework.routers import DefaultRouter
+
+from .views import ForumViewSet
 
 app_name = 'forums'
 
+router = DefaultRouter()
+router.register(r'forums', ForumViewSet)
+
 urlpatterns = [
-    url('forums', ForumAPIView.as_view()),
+    path('', include(router.urls)),
 ]
