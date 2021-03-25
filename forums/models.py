@@ -21,6 +21,7 @@ class Topic(models.Model):
     forum = models.ForeignKey(Forum, on_delete=models.CASCADE, related_name='topics')
     creator = models.ForeignKey(User, on_delete=models.SET(get_deleted_user), related_name='started_topics')
     created_time = models.DateTimeField(auto_now_add=True)
+    changed_time = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
         unique_slugify(self, self.title) 
@@ -31,5 +32,4 @@ class Comment(models.Model):
     topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name='comments')
     author = models.ForeignKey(User, on_delete=models.SET(get_deleted_user), related_name='comments')
     written_time = models.DateTimeField(auto_now_add=True)
-    changed = models.BooleanField(default=False)
     changed_time = models.DateTimeField(auto_now=True)
