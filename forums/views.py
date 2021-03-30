@@ -5,9 +5,9 @@ from rest_framework import generics, viewsets, mixins, status
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
-from .models import Forum, Topic
-from .serializers import ForumSerializer, TopicSerializer
-from .filters import TopicFilter
+from .models import Forum, Topic, Comment
+from .serializers import ForumSerializer, TopicSerializer, CommentSerializer
+from .filters import TopicFilter, CommentFilter
 
 class ForumViewSet(mixins.ListModelMixin,
                    mixins.DestroyModelMixin,
@@ -34,10 +34,10 @@ class TopicViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def create(self, request, *args, **kwargs):
-        serializer_context = {
-            'creator': request.user
-        }
-        serializer = self.serializer_class(data=request.data, context=serializer_context)
+        serializer_data = request.data
+        serializer_data['author'] = request.user
+
+        serializer = self.serializer_class(data=serializer_data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
@@ -52,3 +52,32 @@ class TopicViewSet(viewsets.ModelViewSet):
         serializer.save()
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class CommentViewSet(viewsets.ModelViewSet):
+    queryset = Comment.objects.all()
+    search_field = ('text',)
+    serializer_class = CommentSerializer
+    lookup_field = 'id'
+    filterset_class = CommentFilter
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+
+    def create(self, request, *args, **kwargs):
+        serializer_data = request.data
+        serializer_data['author'] = request.user
+
+        serializer = self.serializer_class(data=serializer_data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def update(self, request, id, *args, **kwargs):
+        instance = get_object_or_404(Comment, id=id)
+        if (instance.author != request.user) or (request.data.get('topic', None) != None):
+            raise PermissionDenied()
+        serializer = self.serializer_class(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
