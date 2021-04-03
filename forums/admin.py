@@ -38,12 +38,14 @@ class TopicAdmin(admin.ModelAdmin):
         readonly = super().get_readonly_fields(request, obj) or []
 
         if obj:
-            return readonly + ['slug']
+            return readonly + ['slug', 'created_time', 'changed_time']
 
         return readonly
 
 class CommentAdmin(admin.ModelAdmin):
     date_hierarchy = 'written_time'
+    fields = ('text', 'topic', 'author', 'written_time', 'changed_time')
+    readonly_fields = ('written_time', 'changed_time')
     autocomplete_fields = ('topic', 'author',)
 
 admin.site.register(Forum, ForumAdmin)
