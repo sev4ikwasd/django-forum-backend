@@ -10,8 +10,9 @@ from .serializers import ForumSerializer, TopicSerializer, CommentSerializer
 from .filters import TopicFilter, CommentFilter
 
 class ForumViewSet(mixins.ListModelMixin,
-                   mixins.DestroyModelMixin,
                    mixins.RetrieveModelMixin,
+                   mixins.CreateModelMixin,
+                   mixins.DestroyModelMixin,
                    viewsets.GenericViewSet):
     queryset = Forum.objects.all()
     search_fields = ('title',)
@@ -35,7 +36,7 @@ class TopicViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         serializer_data = request.data
-        serializer_data['author'] = request.user
+        serializer_data['creator'] = request.user
 
         serializer = self.serializer_class(data=serializer_data)
         serializer.is_valid(raise_exception=True)
@@ -45,16 +46,24 @@ class TopicViewSet(viewsets.ModelViewSet):
 
     def update(self, request, slug, *args, **kwargs):
         instance = get_object_or_404(Topic, slug=slug)
-        if (instance.creator != request.user) or (request.data.get('forum', None) != None):
+        if ((instance.creator != request.user) and not request.user.is_superuser) or (request.data.get('forum', None) != None):
             raise PermissionDenied()
         serializer = self.serializer_class(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def destroy(self, request, slug, *args, **kwargs):
+        instance = get_object_or_404(Topic, slug=slug)
+        if (instance.creator.username != request.user.username) and not request.user.is_superuser:
+            raise PermissionDenied()
+        instance.delete()
+
+        return Response(None, status=status.HTTP_204_NO_CONTENT)
 
 class CommentViewSet(viewsets.ModelViewSet):
-    queryset = Comment.objects.all()
+    queryset = Comment.objects.all().order_by('written_time')
     search_field = ('text',)
     serializer_class = CommentSerializer
     lookup_field = 'id'
@@ -73,11 +82,19 @@ class CommentViewSet(viewsets.ModelViewSet):
 
     def update(self, request, id, *args, **kwargs):
         instance = get_object_or_404(Comment, id=id)
-        if (instance.author != request.user) or (request.data.get('topic', None) != None):
+        if ((instance.author != request.user) and not request.user.is_superuser) or (request.data.get('topic', None) != None):
             raise PermissionDenied()
         serializer = self.serializer_class(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def destroy(self, request, slug, *args, **kwargs):
+        instance = get_object_or_404(Topic, slug=slug)
+        if (instance.aythor != request.user) and not request.user.is_superuser:
+            raise PermissionDenied()
+        instance.delete()
+
+        return Response(None, status=status.HTTP_204_NO_CONTENT)
     

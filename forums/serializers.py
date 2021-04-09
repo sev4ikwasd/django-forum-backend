@@ -3,25 +3,20 @@ from rest_framework import serializers
 from authentication.models import User
 from .models import Forum, Topic, Comment
 
-#Get 5 latest created topics
-def _get_topic_queryset():
-    slice_size = Topic.objects.count()
-    if slice_size > 5:
-        slice_size = 5
-    return Topic.objects.order_by('created_time')[:slice_size]
-
-class TopicNameSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Topic
-        fields = ('title', 'slug',)
-
 class ForumSerializer(serializers.ModelSerializer):
-    topics = TopicNameSerializer(_get_topic_queryset(), many=True, read_only=True)
+    topics = serializers.SerializerMethodField()
 
     class Meta:
         model = Forum
         fields = ('title', 'slug', 'topics',)
         read_only_fields = ('slug', 'topics',)
+
+# Get 5 latest created topic names
+    def get_topics(self, obj):
+        slice_size = Topic.objects.filter(forum=obj).count()
+        slice_size = 5 if slice_size > 5 else slice_size
+        sliced_topics = Topic.objects.filter(forum=obj).order_by('created_time').reverse()[:slice_size]
+        return reversed(list(map(lambda topic: topic.title, sliced_topics)))
 
 class TopicSerializer(serializers.ModelSerializer):
     creator = serializers.SlugRelatedField(slug_field='email', queryset=User.objects.all())
