@@ -64,7 +64,7 @@ class TopicViewSet(viewsets.ModelViewSet):
 
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all().order_by('written_time')
-    search_field = ('text',)
+    search_fields = ('text',)
     serializer_class = CommentSerializer
     lookup_field = 'id'
     filterset_class = CommentFilter
@@ -90,9 +90,9 @@ class CommentViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def destroy(self, request, slug, *args, **kwargs):
-        instance = get_object_or_404(Topic, slug=slug)
-        if (instance.aythor != request.user) and not request.user.is_superuser:
+    def destroy(self, request, id, *args, **kwargs):
+        instance = get_object_or_404(Comment, id=id)
+        if (instance.author != request.user) and not request.user.is_superuser:
             raise PermissionDenied()
         instance.delete()
 
